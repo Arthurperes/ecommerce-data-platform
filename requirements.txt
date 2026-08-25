@@ -1,0 +1,7 @@
+kafka-python==2.3.0
+psycopg2-binary==2.9.9
+pandas==2.2.2
+python-dotenv==1.0.1
+streamlit==1.37.1
+sqlalchemy==2.0.32
+faker==28.0.0

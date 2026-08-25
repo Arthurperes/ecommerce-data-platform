@@ -609,9 +609,13 @@ ML + Streamlit
 
 ---
 
-## 👨‍💻 Autor
+## 👨‍💻 Autores
 
 **Arthur Peres**
+**João Vitor**
+**Maria Luiza**
+**Paulo Vasconcelos**
+**Bianca**
 
 Projeto desenvolvido como parte do **Hands-On de Engenharia de Dados — Universidade Presbiteriana Mackenzie**.
 

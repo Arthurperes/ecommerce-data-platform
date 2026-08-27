@@ -1,14 +1,14 @@
-# 🛒 E-commerce Data Platform
+# E-commerce Data Platform
 
 Plataforma de Engenharia de Dados para processamento e análise de eventos de comportamento de usuários em um ambiente de e-commerce, com foco na identificação de padrões relacionados ao **abandono de carrinho** e na estimativa de **receita potencial não capturada**.
 
 O projeto utiliza conceitos de **Big Data, Data Lake, Arquitetura Lambda, Arquitetura Medallion, processamento distribuído, streaming, Data Quality, Machine Learning, Infrastructure as Code e CI/CD**.
 
-> 🚧 **Status:** Em desenvolvimento
+>  **Status:** Em desenvolvimento
 
 ---
 
-## 🎯 Problema de Negócio
+##  Problema de Negócio
 
 O abandono de carrinho representa uma perda relevante de receita para plataformas de e-commerce.
 
@@ -26,7 +26,7 @@ A partir desses eventos será possível reconstruir jornadas de usuários, anali
 
 ---
 
-## 🏗️ Arquitetura
+##  Arquitetura
 
 A solução combina conceitos de **Lambda Architecture** e **Medallion Architecture**.
 
@@ -71,9 +71,9 @@ A solução combina conceitos de **Lambda Architecture** e **Medallion Architect
 
 ---
 
-## 🧱 Arquitetura Medallion
+##  Arquitetura Medallion
 
-### 🥉 Bronze — Raw
+###  Bronze — Raw
 
 A camada Bronze preserva os dados históricos em seu formato original.
 
@@ -92,7 +92,7 @@ bronze/ecommerce_events/year=2019/month=11/
 
 Nenhuma transformação relevante é realizada nesta etapa, permitindo rastreabilidade e reprocessamento.
 
-### 🥈 Silver — Trusted
+### Silver — Trusted
 
 A camada Silver utiliza **PySpark** para transformar e validar os eventos da Bronze.
 
@@ -128,7 +128,7 @@ Essa camada servirá de origem para análises, dashboard, modelo dimensional e M
 
 ---
 
-## ⚡ Lambda Architecture
+## Lambda Architecture
 
 O projeto combina dois caminhos de processamento.
 
@@ -152,7 +152,7 @@ O objetivo é demonstrar como a mesma plataforma poderia processar dados histór
 
 ---
 
-## 📊 Dataset
+##  Dataset
 
 O projeto utiliza uma base pública de comportamento de usuários em e-commerce.
 
@@ -176,7 +176,7 @@ Por questões de tamanho, o dataset **não é versionado neste repositório**.
 
 ---
 
-## 🔄 Pipeline de Dados
+## Pipeline de Dados
 
 O pipeline é dividido em etapas independentes:
 
@@ -206,7 +206,7 @@ Paralelamente, Kafka será utilizado para implementação da Speed Layer.
 
 ---
 
-## 🤖 Machine Learning
+## Machine Learning
 
 Uma das etapas planejadas é a construção de um modelo classificatório para identificar sessões com maior probabilidade de abandono.
 
@@ -242,7 +242,7 @@ A avaliação considerará métricas adequadas ao problema de classificação e 
 
 ---
 
-## ⭐ Star Schema
+## Star Schema
 
 A camada analítica utilizará modelagem dimensional para facilitar consultas e análises.
 
@@ -262,7 +262,7 @@ O modelo será utilizado para análises de eventos, usuários, produtos, categor
 
 ---
 
-## 🧠 Wide Table
+## Wide Table
 
 Além do modelo dimensional, será construída uma **Wide Table** orientada ao Machine Learning.
 
@@ -287,7 +287,7 @@ abandoned_cart
 
 ---
 
-## 📈 Dashboard
+## Dashboard
 
 O dashboard será desenvolvido utilizando **Streamlit**.
 
@@ -327,7 +327,7 @@ PURCHASE
 
 ---
 
-## 🛠️ Tecnologias
+## Tecnologias
 
 | Categoria                 | Tecnologia               |
 | ------------------------- | -----------------------  |
@@ -346,7 +346,7 @@ PURCHASE
 
 ---
 
-## 🐳 Infraestrutura Docker
+## Infraestrutura Docker
 
 O ambiente local é executado utilizando Docker Compose.
 
@@ -383,7 +383,7 @@ docker compose down
 
 ---
 
-## 📂 Estrutura do Projeto
+## Estrutura do Projeto
 
 ```text
 ecommerce-data-platform/
@@ -425,7 +425,7 @@ A pasta `data/` é ignorada pelo Git para evitar o versionamento de arquivos de 
 
 ---
 
-## 🚀 Executando o Projeto
+## Executando o Projeto
 
 ### 1. Clone o repositório
 
@@ -488,7 +488,7 @@ MinIO
 
 ---
 
-## 🔍 Data Quality
+## Data Quality
 
 A plataforma incorpora validações durante a transformação dos dados.
 
@@ -508,7 +508,7 @@ As regras serão evoluídas juntamente com as camadas Silver e Gold.
 
 ---
 
-## ⚙️ CI/CD
+## CI/CD
 
 O pipeline de CI/CD será implementado utilizando **GitHub Actions**.
 
@@ -538,13 +538,13 @@ Docker Validation
 
 ---
 
-## 🏗️ Infrastructure as Code
+## Infrastructure as Code
 
 A infraestrutura do projeto será versionada utilizando **Terraform**, permitindo demonstrar conceitos de Infrastructure as Code (IaC), reprodutibilidade e automação do ambiente.
 
 ---
 
-## 🔐 Governança e Segurança
+## Governança e Segurança
 
 O projeto considera práticas relacionadas a:
 
@@ -559,7 +559,7 @@ O projeto considera práticas relacionadas a:
 
 ---
 
-## 🗺️ Roadmap
+## Roadmap
 
 * [x] Definição do problema de negócio
 * [x] Seleção do dataset
@@ -587,7 +587,7 @@ O projeto considera práticas relacionadas a:
 
 ---
 
-## 📌 Status Atual
+## Status Atual
 
 Atualmente, a plataforma possui infraestrutura local containerizada e ingestão Batch funcional.
 

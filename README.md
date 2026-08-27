@@ -329,20 +329,20 @@ PURCHASE
 
 ## 🛠️ Tecnologias
 
-| Categoria                 | Tecnologia              |
-| ------------------------- | ----------------------- |
-| Linguagem                 | Python                  |
-| Processamento distribuído | Apache Spark / PySpark  |
-| Streaming                 | Apache Kafka            |
-| Data Lake                 | MinIO                   |
-| Banco analítico           | PostgreSQL              |
-| Administração             | pgAdmin                 |
-| Dashboard                 | Streamlit               |
-| Machine Learning          | Scikit-learn            |
-| Containers                | Docker / Docker Compose |
-| Infrastructure as Code    | Terraform               |
-| CI/CD                     | GitHub Actions          |
-| Versionamento             | Git / GitHub            |
+| Categoria                 | Tecnologia               |
+| ------------------------- | -----------------------  |
+| Linguagem                 | Python                   |
+| Processamento distribuído | Apache Spark / PySpark   | 
+| Streaming                 | Apache Kafka             |
+| Data Lake                 | S3                       |
+| Banco analítico           | PostgreSQL               |
+| Administração             | pgAdmin                  |
+| Dashboard                 | Streamlit / PWB -- "TBD" |
+| Machine Learning          | Scikit-learn  - "TBD"    |
+| Containers                | Docker / Docker Compose  |
+| Infrastructure as Code    | Terraform                |
+| CI/CD                     | GitHub Actions           |
+| Versionamento             | Git / GitHub             |
 
 ---
 

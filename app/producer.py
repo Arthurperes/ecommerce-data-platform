@@ -9,6 +9,7 @@ producer = KafkaProducer(
     value_serializer=lambda v: json.dumps(v).encode("utf-8")
 )
 
+
 def run():
     print("Producer de eventos de e-commerce iniciado...")
 
@@ -23,6 +24,7 @@ def run():
         print(f"Evento enviado: {data}")
 
         time.sleep(2)
+
 
 if __name__ == "__main__":
     run()

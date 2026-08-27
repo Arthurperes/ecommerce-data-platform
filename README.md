@@ -30,46 +30,8 @@ A partir desses eventos será possível reconstruir jornadas de usuários, anali
 
 A solução combina conceitos de **Lambda Architecture** e **Medallion Architecture**.
 
-```text
-                         E-COMMERCE EVENTS
-                                │
-                 ┌──────────────┴──────────────┐
-                 │                             │
-           BATCH LAYER                    SPEED LAYER
-                 │                             │
-        Historical Dataset              Python Producer
-                 │                             │
-                 │                           Kafka
-                 │                             │
-                 │                         Consumer
-                 │                             │
-                 └──────────────┬──────────────┘
-                                │
-                                ▼
-                              MinIO
-                            DATA LAKE
-                                │
-                  ┌─────────────┼─────────────┐
-                  │             │             │
-                  ▼             ▼             ▼
-               BRONZE        SILVER          GOLD
-                RAW          TRUSTED        CURATED
-                  │             ▲             │
-                  │             │             │
-                  └─────────► PySpark ◄───────┘
-                                              │
-                              ┌───────────────┼──────────────┐
-                              │               │              │
-                              ▼               ▼              ▼
-                         PostgreSQL      Wide Table          ML
-                              │                              │
-                              └───────────────┬──────────────┘
-                                              ▼
-                                          Streamlit
-                                          Dashboard
-```
+![Uploading image.png…]()
 
----
 
 ##  Arquitetura Medallion
 

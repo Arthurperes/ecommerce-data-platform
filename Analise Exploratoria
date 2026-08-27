@@ -1,0 +1,92 @@
+# Análise Exploratória Inicial
+
+## Objetivo
+
+A análise exploratória tem como objetivo entender a estrutura do dataset e identificar os primeiros padrões relacionados ao comportamento dos usuários no e-commerce.
+
+O foco principal é analisar o caminho entre os eventos:
+
+```text
+view → cart → purchase
+```
+
+e entender melhor as sessões em que produtos são adicionados ao carrinho, mas a compra não é realizada.
+
+## Dados analisados
+
+Os principais campos utilizados são:
+
+- `event_time`
+- `event_type`
+- `product_id`
+- `category_code`
+- `brand`
+- `price`
+- `user_id`
+- `user_session`
+
+O dataset possui aproximadamente 67 milhões de eventos. Antes das análises, são verificadas duplicidades, valores nulos, preços inválidos e tipos de eventos diferentes de `view`, `cart` e `purchase`.
+
+## Análises
+
+### Distribuição dos eventos
+
+A primeira análise compara a quantidade de:
+
+- visualizações (`view`);
+- adições ao carrinho (`cart`);
+- compras (`purchase`).
+
+Com esses dados podemos ter uma visão inicial do funil:
+
+```text
+VIEW
+ ↓
+CART
+ ↓
+PURCHASE
+```
+
+### Categorias e marcas
+
+Também serão analisadas as categorias e marcas com maior número de eventos e compras.
+
+Essa análise pode ajudar a identificar produtos que possuem bastante interesse dos usuários, mas apresentam uma conversão menor.
+
+### Análise por sessão
+
+Para analisar abandono de carrinho será utilizado o campo `user_session`.
+
+Nesta primeira versão, consideramos como possível abandono uma sessão que possui evento de `cart`, mas não possui `purchase`.
+
+```text
+cart + purchase → conversão
+
+cart sem purchase → possível abandono
+```
+
+Essa é uma regra inicial e poderá ser refinada nas próximas etapas do projeto.
+
+### Preços
+
+O campo `price` será utilizado para analisar a distribuição dos valores dos produtos e posteriormente estimar o valor associado aos carrinhos que não foram convertidos.
+
+Esse valor será tratado como uma estimativa e não como receita efetivamente perdida.
+
+## Dashboard
+
+Os primeiros gráficos selecionados para o Streamlit são:
+
+- quantidade de eventos por tipo;
+- funil `view → cart → purchase`;
+- evolução dos eventos ao longo do tempo;
+- Top 10 categorias;
+- Top 10 marcas;
+- conversão x possível abandono;
+- indicadores de qualidade dos dados.
+
+A primeira versão do dashboard pode trabalhar com uma amostra dos dados. Depois da construção das camadas Silver e Gold, os indicadores serão calculados sobre os dados tratados.
+
+## Próximos passos
+
+As próximas análises serão voltadas para abandono por categoria, marca e faixa de preço, além da criação de métricas por sessão que serão utilizadas na Wide Table e posteriormente no modelo de Machine Learning.

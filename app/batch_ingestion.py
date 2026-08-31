@@ -1,67 +1,51 @@
-import os
+import boto3
+from pathlib import Path
 
-from minio import Minio
+BUCKET_NAME = "ecommerce-data-platform-mack-lab"
+AWS_REGION = "us-east-1"
 
+LOCAL_FILE = "data/input/2019-Nov.csv"
 
-CSV_PATH = "data/input/2019-Nov.csv"
-
-MINIO_ENDPOINT = "localhost:9000"
-MINIO_ACCESS_KEY = "minioadmin"
-MINIO_SECRET_KEY = "minioadmin"
-
-BUCKET_NAME = "bronze"
-
-OBJECT_NAME = (
-    "ecommerce_events/"
-    "year=2019/"
-    "month=11/"
+S3_KEY = (
+    "bronze/ecommerce_events/"
+    "year=2019/month=11/"
     "2019-Nov.csv"
 )
 
 
-def create_client():
-    return Minio(
-        MINIO_ENDPOINT,
-        access_key=MINIO_ACCESS_KEY,
-        secret_key=MINIO_SECRET_KEY,
-        secure=False,
-    )
+def upload_dataset():
 
+    file_path = Path(LOCAL_FILE)
 
-def create_bucket_if_needed(client):
-    if not client.bucket_exists(BUCKET_NAME):
-        client.make_bucket(BUCKET_NAME)
-        print(f"Bucket '{BUCKET_NAME}' criado.")
-
-    else:
-        print(f"Bucket '{BUCKET_NAME}' já existe.")
-
-
-def upload_dataset(client):
-    if not os.path.exists(CSV_PATH):
+    if not file_path.exists():
         raise FileNotFoundError(
-            f"Dataset não encontrado: {CSV_PATH}"
+            f"Arquivo não encontrado: {file_path.resolve()}"
         )
 
-    print("Iniciando upload do dataset...")
-
-    client.fput_object(
-        BUCKET_NAME,
-        OBJECT_NAME,
-        CSV_PATH,
-        content_type="text/csv",
+    s3 = boto3.client(
+        "s3",
+        region_name=AWS_REGION
     )
 
-    print("Upload concluído.")
-    print(f"Destino: {BUCKET_NAME}/{OBJECT_NAME}")
+    print("Iniciando ingestão do dataset...")
+    print(f"Arquivo local: {file_path}")
+    print(f"Bucket: {BUCKET_NAME}")
+    print(f"Destino: s3://{BUCKET_NAME}/{S3_KEY}")
 
+    try:
+        s3.upload_file(
+            str(file_path),
+            BUCKET_NAME,
+            S3_KEY
+        )
 
-def main():
-    client = create_client()
+        print("Upload concluído com sucesso!")
 
-    create_bucket_if_needed(client)
-    upload_dataset(client)
+    except Exception as error:
+        print("Erro durante o upload:")
+        print(error)
+        raise
 
 
 if __name__ == "__main__":
-    main()
+    upload_dataset()

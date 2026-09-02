@@ -52,7 +52,6 @@ def download_silver_files(s3, local_dir):
 
 
 def upload_directory(s3, local_dir, prefix):
-
     for root, _, files in os.walk(local_dir):
 
         for filename in files:
@@ -127,19 +126,56 @@ def main():
         )
 
         # =====================================================
+        # PRIMEIRO EVENTO DE CARRINHO DA SESSAO
+        # =====================================================
+
+        print("Identificando primeiro evento de carrinho...")
+
+        first_cart = (
+            df
+            .filter(
+                F.col("event_type") == "cart"
+            )
+            .groupBy(
+                "user_session",
+                "user_id"
+            )
+            .agg(
+                F.min(
+                    "event_time"
+                ).alias(
+                    "first_cart_time"
+                )
+            )
+        )
+
+        df_with_cart_time = (
+            df
+            .join(
+                first_cart,
+                [
+                    "user_session",
+                    "user_id"
+                ],
+                "left"
+            )
+        )
+
+        # =====================================================
         # SESSION FEATURES
         # =====================================================
 
         print("Criando session_features...")
 
         session_features = (
-            df
+            df_with_cart_time
             .groupBy(
                 "user_session",
                 "user_id"
             )
             .agg(
 
+                # Valor total adicionado ao carrinho
                 F.sum(
                     F.when(
                         F.col("event_type") == "cart",
@@ -149,6 +185,7 @@ def main():
                     "total_cart_value"
                 ),
 
+                # Quantidade de eventos de carrinho
                 F.sum(
                     F.when(
                         F.col("event_type") == "cart",
@@ -158,15 +195,25 @@ def main():
                     "num_cart_items"
                 ),
 
+                # Views ocorridos antes do primeiro cart
                 F.sum(
                     F.when(
-                        F.col("event_type") == "view",
+                        (
+                            F.col("event_type") == "view"
+                        )
+                        &
+                        (
+                            F.col("event_time")
+                            <
+                            F.col("first_cart_time")
+                        ),
                         1
                     ).otherwise(0)
                 ).alias(
-                    "num_views"
+                    "num_views_before_cart"
                 ),
 
+                # Total de compras observadas na sessão
                 F.sum(
                     F.when(
                         F.col("event_type") == "purchase",
@@ -176,34 +223,53 @@ def main():
                     "num_purchases"
                 ),
 
+                # Início da sessão
                 F.min(
                     "event_time"
                 ).alias(
                     "session_start"
                 ),
 
+                # Fim da sessão
                 F.max(
                     "event_time"
                 ).alias(
                     "session_end"
+                ),
+
+                # Horário do primeiro carrinho
+                F.min(
+                    "first_cart_time"
+                ).alias(
+                    "first_cart_time"
                 )
             )
         )
 
+        # =====================================================
+        # FEATURES DERIVADAS
+        # =====================================================
+
         session_features = (
             session_features
+
+            # Duração total da sessão
             .withColumn(
                 "session_duration_sec",
                 F.col("session_end").cast("long")
                 -
                 F.col("session_start").cast("long")
             )
+
+            # Hora do primeiro carrinho
             .withColumn(
                 "hour_of_day",
                 F.hour(
-                    "session_start"
+                    "first_cart_time"
                 )
             )
+
+            # Flag de período noturno
             .withColumn(
                 "is_night",
                 F.when(
@@ -217,6 +283,19 @@ def main():
                     1
                 ).otherwise(0)
             )
+
+            # Relação entre quantidade de views e itens no carrinho
+            .withColumn(
+                "view_to_cart_ratio",
+                F.when(
+                    F.col("num_cart_items") > 0,
+                    F.col("num_views_before_cart")
+                    /
+                    F.col("num_cart_items")
+                ).otherwise(0.0)
+            )
+
+            # Target de abandono
             .withColumn(
                 "is_abandoned",
                 F.when(
@@ -230,12 +309,14 @@ def main():
                     1
                 ).otherwise(0)
             )
+
             .withColumnRenamed(
                 "user_session",
                 "session_id"
             )
         )
 
+        # Mantém somente sessões que tiveram cart
         session_features = (
             session_features
             .filter(
@@ -248,12 +329,16 @@ def main():
             session_features.count()
         )
 
+        print("\n=== AMOSTRA SESSION_FEATURES ===")
+
         session_features.select(
             "session_id",
             "user_id",
             "total_cart_value",
             "num_cart_items",
-            "num_views",
+            "num_views_before_cart",
+            "view_to_cart_ratio",
+            "num_purchases",
             "session_duration_sec",
             "hour_of_day",
             "is_night",
@@ -264,7 +349,7 @@ def main():
         )
 
         # =====================================================
-        # FUNNEL
+        # FUNNEL METRICS
         # =====================================================
 
         print("Criando métricas do funil...")
@@ -283,7 +368,7 @@ def main():
         funnel.show()
 
         # =====================================================
-        # GRAVA GOLD LOCAL
+        # GRAVAÇÃO LOCAL
         # =====================================================
 
         print("Gravando Gold local...")
@@ -307,7 +392,7 @@ def main():
         )
 
         # =====================================================
-        # UPLOAD S3
+        # UPLOAD PARA S3
         # =====================================================
 
         print(
@@ -332,9 +417,11 @@ def main():
 
         print()
         print("GOLD CRIADA COM SUCESSO")
+
         print(
             f"s3://{BUCKET_NAME}/{GOLD_SESSION_PREFIX}"
         )
+
         print(
             f"s3://{BUCKET_NAME}/{GOLD_FUNNEL_PREFIX}"
         )

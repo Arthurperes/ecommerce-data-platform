@@ -35,5 +35,7 @@ jobs:
           python -m py_compile dashboard/streamlit_app.py
 
       - name: Run automated tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}
         run: |
-          pytest tests -v
+          python -m pytest tests -v

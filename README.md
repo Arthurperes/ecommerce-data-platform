@@ -1164,3 +1164,40 @@ O projeto integra processamento de dados em larga escala, arquitetura Medallion,
 
 Mais do que identificar carrinhos abandonados, a proposta é utilizar os dados para estimar a propensão à conversão e direcionar ações comerciais diferentes de acordo com o comportamento de cada grupo de clientes.
 
+
+---
+
+## Implementação na AWS
+
+Além da execução local utilizada durante o desenvolvimento, a arquitetura de processamento e consulta foi implementada e validada na AWS.
+
+### Pipeline de dados
+
+O fluxo implementado utiliza arquitetura Medallion no Amazon S3:
+
+```text
+Dataset de E-commerce
+        |
+        v
+Amazon S3 - Bronze
+        |
+        v
+AWS Glue / PySpark
+        |
+        v
+Amazon S3 - Silver
+        |
+        v
+AWS Glue / PySpark
+        |
+        v
+Amazon S3 - Gold
+        |
+        v
+AWS Glue Data Catalog
+        |
+        v
+Amazon Athena
+        |
+        v
+Streamlit Dashboard

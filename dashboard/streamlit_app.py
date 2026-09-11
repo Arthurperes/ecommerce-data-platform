@@ -1,12 +1,14 @@
 import os
 import sys
+from textwrap import dedent
 
 import pandas as pd
 import streamlit as st
 from pyathena import connect
 
+
 # ============================================================
-# AJUSTE DE PATH PARA IMPORTAR A MATRIZ DE DECISAO
+# PATH DO PROJETO
 # ============================================================
 
 PROJECT_ROOT = os.path.abspath(
@@ -20,6 +22,7 @@ if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
 from src.decision_matrix import get_action
+
 
 # ============================================================
 # CONFIGURACAO AWS / ATHENA
@@ -40,7 +43,6 @@ FUNNEL_TABLE = "gold_glue_test_funnel_metrics"
 
 @st.cache_data(ttl=300)
 def run_athena_query(sql):
-
     conn = connect(
         s3_staging_dir=ATHENA_STAGING_DIR,
         region_name=AWS_REGION
@@ -50,6 +52,7 @@ def run_athena_query(sql):
         sql,
         conn
     )
+
 
 # ============================================================
 # CONFIGURACAO DA PAGINA
@@ -63,29 +66,206 @@ st.set_page_config(
 
 
 # ============================================================
-# CAMINHOS
+# CSS
 # ============================================================
 
-METRICS_PATH = os.path.join(
-    PROJECT_ROOT,
-    "data",
-    "output",
-    "model_metrics.csv"
+st.markdown(
+    """
+    <style>
+
+    .block-container {
+        padding-top: 2rem;
+        padding-bottom: 3rem;
+        max-width: 1500px;
+    }
+
+    [data-testid="stSidebar"] {
+        background: linear-gradient(
+            180deg,
+            #0f172a 0%,
+            #111827 100%
+        );
+    }
+
+    [data-testid="stSidebar"] * {
+        color: #f8fafc;
+    }
+
+    [data-testid="stSidebar"] hr {
+        border-color: #334155;
+    }
+
+    h1 {
+        font-weight: 750;
+        letter-spacing: -0.8px;
+    }
+
+    h2, h3 {
+        font-weight: 650;
+        letter-spacing: -0.4px;
+    }
+
+    [data-testid="stMetric"] {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        padding: 18px 20px;
+        border-radius: 14px;
+        box-shadow:
+            0 2px 6px rgba(15, 23, 42, 0.04),
+            0 8px 20px rgba(15, 23, 42, 0.04);
+    }
+
+    [data-testid="stMetricLabel"] {
+        font-size: 0.88rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    [data-testid="stMetricValue"] {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    [data-testid="stDataFrame"] {
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    [data-testid="stAlert"] {
+        border-radius: 12px;
+    }
+
+    hr {
+        margin-top: 2rem;
+        margin-bottom: 2rem;
+        border-color: #e5e7eb;
+    }
+
+    .hero {
+        padding: 26px 30px;
+        border-radius: 18px;
+        margin-bottom: 28px;
+        background:
+            linear-gradient(
+                135deg,
+                #0f172a 0%,
+                #1e293b 60%,
+                #0f766e 100%
+            );
+        color: white;
+        box-shadow: 0 12px 35px rgba(15, 23, 42, 0.15);
+    }
+
+    .hero h1 {
+        margin: 0;
+        color: white;
+        font-size: 2.15rem;
+    }
+
+    .hero p {
+        margin-top: 8px;
+        margin-bottom: 0;
+        color: #cbd5e1;
+        font-size: 1rem;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.12);
+        color: #e2e8f0;
+        font-size: 0.78rem;
+        margin-right: 6px;
+        margin-top: 12px;
+    }
+
+    .pipeline-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin: 20px 0 30px 0;
+        flex-wrap: wrap;
+    }
+
+    .pipeline-card {
+        flex: 1;
+        min-width: 120px;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 16px 10px;
+        text-align: center;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+    }
+
+    .pipeline-icon {
+        font-size: 1.65rem;
+        margin-bottom: 6px;
+    }
+
+    .pipeline-title {
+        font-weight: 700;
+        color: #0f172a;
+        font-size: 0.95rem;
+    }
+
+    .pipeline-subtitle {
+        font-size: 0.76rem;
+        color: #64748b;
+        margin-top: 4px;
+    }
+
+    .pipeline-arrow {
+        font-size: 1.4rem;
+        color: #64748b;
+    }
+
+    .status-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 14px 16px;
+        min-height: 105px;
+    }
+
+    .status-ok {
+        color: #15803d;
+        font-weight: 700;
+    }
+
+    .model-winner {
+        background: linear-gradient(
+            135deg,
+            #ecfdf5,
+            #f0fdfa
+        );
+        border: 1px solid #a7f3d0;
+        border-radius: 14px;
+        padding: 18px;
+        margin-bottom: 20px;
+    }
+
+    #MainMenu {
+        visibility: hidden;
+    }
+
+    footer {
+        visibility: hidden;
+    }
+
+    </style>
+    """,
+    unsafe_allow_html=True
 )
 
-FEATURE_IMPORTANCE_PATH = os.path.join(
-    PROJECT_ROOT,
-    "data",
-    "output",
-    "feature_importance.csv"
-)
 
-SCORES_PATH = os.path.join(
-    PROJECT_ROOT,
-    "data",
-    "output",
-    "conversion_scores_sample.csv"
-)
+# ============================================================
+# CAMINHOS LOCAIS
+# ============================================================
 
 CLUSTER_CONVERSION_PATH = os.path.join(
     PROJECT_ROOT,
@@ -110,7 +290,7 @@ CLUSTER_METRICS_PATH = os.path.join(
 
 
 # ============================================================
-# MAPEAMENTO DOS PERFIS
+# PERFIS
 # ============================================================
 
 PROFILE_MAP = {
@@ -121,29 +301,16 @@ PROFILE_MAP = {
 
 
 # ============================================================
-# CARGA DOS DADOS
+# CARGA CSV
 # ============================================================
 
 @st.cache_data
 def load_csv(path):
-
     if os.path.exists(path):
         return pd.read_csv(path)
 
     return pd.DataFrame()
 
-
-metrics_df = load_csv(
-    METRICS_PATH
-)
-
-feature_importance_df = load_csv(
-    FEATURE_IMPORTANCE_PATH
-)
-
-scores_df = load_csv(
-    SCORES_PATH
-)
 
 cluster_conversion_df = load_csv(
     CLUSTER_CONVERSION_PATH
@@ -162,22 +329,44 @@ cluster_metrics_df = load_csv(
 # CABECALHO
 # ============================================================
 
-st.title(
-    "🛒 E-commerce Cart Recovery"
-)
+st.markdown(
+    dedent(
+        """
+        <div class="hero">
+        <h1>🛒 E-commerce Cart Recovery</h1>
 
-st.caption(
-    "Plataforma de dados para análise de abandono de carrinho, "
-    "propensão à conversão e recomendação de ações comerciais."
-)
+        <p>
+            Plataforma analítica para identificação de abandono
+            de carrinho, propensão à conversão e recomendação de
+            ações comerciais.
+        </p>
 
+        <span class="badge">AWS</span>
+        <span class="badge">S3 Data Lake</span>
+        <span class="badge">AWS Glue</span>
+        <span class="badge">PySpark</span>
+        <span class="badge">Athena</span>
+        <span class="badge">Spark ML</span>
+        <span class="badge">EC2</span>
+        <span class="badge">Terraform</span>
+            </div>
+        """
+    ),
+    unsafe_allow_html=True
+)
 
 # ============================================================
 # SIDEBAR
 # ============================================================
 
-st.sidebar.title(
-    "Navegação"
+st.sidebar.markdown(
+    """
+    ## 🛒 Cart Recovery
+
+    **E-commerce Data Platform**
+
+    ---
+    """
 )
 
 page = st.sidebar.radio(
@@ -191,6 +380,12 @@ page = st.sidebar.radio(
     ]
 )
 
+st.sidebar.markdown("---")
+
+st.sidebar.caption(
+    "AWS • Glue • Athena • Spark ML • EC2"
+)
+
 
 # ============================================================
 # VISAO GERAL
@@ -202,13 +397,44 @@ if page == "Visão Geral":
         "📊 Visão Geral do Projeto"
     )
 
+    st.markdown(
+    	'<div class="pipeline-container">'
+    	'<div class="pipeline-card"><div class="pipeline-icon">📄</div><div class="pipeline-title">Dataset</div><div class="pipeline-subtitle">Eventos E-commerce</div></div>'
+    	'<div class="pipeline-arrow">→</div>'
+  	'<div class="pipeline-card"><div class="pipeline-icon">🪣</div><div class="pipeline-title">S3 Bronze</div><div class="pipeline-subtitle">Raw / CSV</div></div>'
+    	'<div class="pipeline-arrow">→</div>'
+    	'<div class="pipeline-card"><div class="pipeline-icon">⚙️</div><div class="pipeline-title">AWS Glue</div><div class="pipeline-subtitle">PySpark ETL</div></div>'
+    	'<div class="pipeline-arrow">→</div>'
+    	'<div class="pipeline-card"><div class="pipeline-icon">🥈</div><div class="pipeline-title">Silver</div><div class="pipeline-subtitle">Parquet tratado</div></div>'
+    	'<div class="pipeline-arrow">→</div>'
+    	'<div class="pipeline-card"><div class="pipeline-icon">🥇</div><div class="pipeline-title">Gold</div><div class="pipeline-subtitle">Features / Métricas</div></div>'
+    	'<div class="pipeline-arrow">→</div>'
+    	'<div class="pipeline-card"><div class="pipeline-icon">🔎</div><div class="pipeline-title">Athena</div><div class="pipeline-subtitle">SQL Analytics</div></div>'
+    	'<div class="pipeline-arrow">→</div>'
+    	'<div class="pipeline-card"><div class="pipeline-icon">📊</div><div class="pipeline-title">EC2</div><div class="pipeline-subtitle">Streamlit</div></div>'
+    	'</div>',
+    	unsafe_allow_html=True,
+     )       
+
     try:
 
         overview_query = f"""
         SELECT
             COUNT(*) AS cart_sessions,
-            SUM(CASE WHEN is_abandoned = 1 THEN 1 ELSE 0 END) AS abandoned_sessions,
-            SUM(CASE WHEN converted = 1 THEN 1 ELSE 0 END) AS converted_sessions
+            SUM(
+                CASE
+                    WHEN is_abandoned = 1
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS abandoned_sessions,
+            SUM(
+                CASE
+                    WHEN converted = 1
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS converted_sessions
         FROM {ATHENA_DATABASE}.{SESSION_TABLE}
         """
 
@@ -243,9 +469,23 @@ if page == "Visão Geral":
             funnel_df["count"].sum()
         )
 
-        col1, col2, col3, col4 = st.columns(
-            4
+        abandonment_rate = (
+            abandoned_sessions
+            / cart_sessions
+            * 100
         )
+
+        conversion_rate = (
+            converted_sessions
+            / cart_sessions
+            * 100
+        )
+
+        # ----------------------------------------------------
+        # KPIs PRINCIPAIS
+        # ----------------------------------------------------
+
+        col1, col2, col3, col4 = st.columns(4)
 
         col1.metric(
             "Eventos processados",
@@ -274,6 +514,47 @@ if page == "Visão Geral":
 
         st.divider()
 
+        # ----------------------------------------------------
+        # RESUMO EXECUTIVO
+        # ----------------------------------------------------
+
+        st.subheader(
+            "Resumo Executivo"
+        )
+
+        col1, col2, col3, col4 = st.columns(4)
+
+        col1.metric(
+            "Taxa de abandono",
+            f"{abandonment_rate:.2f}%"
+        )
+
+        col2.metric(
+            "Taxa de conversão",
+            f"{conversion_rate:.2f}%"
+        )
+
+        col3.metric(
+            "Modelo ML",
+            "GBT V2"
+        )
+
+        col4.metric(
+            "ROC-AUC",
+            "0.644"
+        )
+
+        st.caption(
+            "Pipeline executado na AWS utilizando S3, Glue, "
+            "Spark ML, Glue Data Catalog, Athena e EC2."
+        )
+
+        st.divider()
+
+        # ----------------------------------------------------
+        # ABANDONO E CONVERSAO
+        # ----------------------------------------------------
+
         st.subheader(
             "Taxa de abandono e conversão"
         )
@@ -297,40 +578,14 @@ if page == "Visão Geral":
             )
         )
 
-        abandonment_rate = (
-            abandoned_sessions
-            /
-            cart_sessions
-            *
-            100
-        )
-
-        conversion_rate = (
-            converted_sessions
-            /
-            cart_sessions
-            *
-            100
-        )
-
-        col1, col2 = st.columns(
-            2
-        )
-
-        col1.metric(
-            "Taxa de abandono",
-            f"{abandonment_rate:.2f}%"
-        )
-
-        col2.metric(
-            "Taxa de conversão",
-            f"{conversion_rate:.2f}%"
-        )
-
         st.divider()
 
+        # ----------------------------------------------------
+        # FUNIL
+        # ----------------------------------------------------
+
         st.subheader(
-            "Funil de eventos"
+            "Funil de Eventos"
         )
 
         st.bar_chart(
@@ -345,9 +600,129 @@ if page == "Visão Geral":
             hide_index=True
         )
 
+        funnel_values = (
+            funnel_df
+            .set_index("event_type")["count"]
+            .to_dict()
+        )
+
+        views = funnel_values.get(
+            "view",
+            0
+        )
+
+        carts = funnel_values.get(
+            "cart",
+            0
+        )
+
+        purchases = funnel_values.get(
+            "purchase",
+            0
+        )
+
+        view_to_cart = (
+            carts / views * 100
+            if views > 0
+            else 0
+        )
+
+        cart_to_purchase = (
+            purchases / carts * 100
+            if carts > 0
+            else 0
+        )
+
+        view_to_purchase = (
+            purchases / views * 100
+            if views > 0
+            else 0
+        )
+
+        st.subheader(
+            "Conversão entre etapas do funil"
+        )
+
+        col1, col2, col3 = st.columns(3)
+
+        col1.metric(
+            "View → Cart",
+            f"{view_to_cart:.2f}%"
+        )
+
+        col2.metric(
+            "Cart → Purchase",
+            f"{cart_to_purchase:.2f}%"
+        )
+
+        col3.metric(
+            "View → Purchase",
+            f"{view_to_purchase:.2f}%"
+        )
+
+        st.divider()
+
+        # ----------------------------------------------------
+        # STATUS DA PLATAFORMA
+        # ----------------------------------------------------
+
+        st.subheader(
+            "☁️ Status da Plataforma"
+        )
+
+        col1, col2, col3, col4 = st.columns(4)
+
+        with col1:
+            st.markdown(
+                """
+                <div class="status-card">
+                    <b>Amazon S3</b><br>
+                    <span class="status-ok">● Ativo</span><br>
+                    <small>Bronze / Silver / Gold</small>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+        with col2:
+            st.markdown(
+                """
+                <div class="status-card">
+                    <b>AWS Glue</b><br>
+                    <span class="status-ok">● Processado</span><br>
+                    <small>ETL + ML V2</small>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+        with col3:
+            st.markdown(
+                """
+                <div class="status-card">
+                    <b>Amazon Athena</b><br>
+                    <span class="status-ok">● Conectado</span><br>
+                    <small>Consultas Gold</small>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+        with col4:
+            st.markdown(
+                """
+                <div class="status-card">
+                    <b>Amazon EC2</b><br>
+                    <span class="status-ok">● Online</span><br>
+                    <small>Streamlit :8501</small>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
         st.info(
-            "Esta visão consulta diretamente a camada Gold "
-            "no S3 por meio do Amazon Athena e do AWS Glue Data Catalog."
+            "A visão executiva consulta a camada Gold por meio "
+            "do Amazon Athena e do AWS Glue Data Catalog."
         )
 
     except Exception as e:
@@ -360,6 +735,7 @@ if page == "Visão Geral":
             str(e)
         )
 
+
 # ============================================================
 # MODELO DE PROPENSAO
 # ============================================================
@@ -371,19 +747,27 @@ elif page == "Modelo de Propensão":
     )
 
     st.write(
-        "A versão atual do modelo foi treinada na AWS com "
-        "Spark ML, comparando Random Forest e Gradient-Boosted "
-        "Trees (GBT). O GBT apresentou o melhor desempenho "
-        "na validação e foi selecionado como modelo final."
+        "A versão atual foi treinada na AWS utilizando "
+        "Apache Spark ML. Random Forest e Gradient-Boosted "
+        "Trees foram comparados utilizando o mesmo conjunto "
+        "de validação."
+    )
+
+    st.markdown(
+        """
+        <div class="model-winner">
+            <b>🏆 Modelo vencedor: GBTClassifier</b><br>
+            Selecionado pelo desempenho de ROC-AUC na validação.
+        </div>
+        """,
+        unsafe_allow_html=True
     )
 
     st.subheader(
         "Resultados do Modelo V2"
     )
 
-    col1, col2, col3 = st.columns(
-        3
-    )
+    col1, col2, col3 = st.columns(3)
 
     col1.metric(
         "Accuracy",
@@ -400,9 +784,7 @@ elif page == "Modelo de Propensão":
         "20.79%"
     )
 
-    col4, col5, col6 = st.columns(
-        3
-    )
+    col4, col5, col6 = st.columns(3)
 
     col4.metric(
         "F1 Score",
@@ -420,12 +802,15 @@ elif page == "Modelo de Propensão":
     )
 
     st.caption(
-        "Modelo vencedor: GBTClassifier. "
         "Treinamento e avaliação executados no AWS Glue "
         "com Apache Spark ML."
     )
 
     st.divider()
+
+    # --------------------------------------------------------
+    # V1 x V2
+    # --------------------------------------------------------
 
     st.subheader(
         "Comparação V1 × V2"
@@ -458,12 +843,7 @@ elif page == "Modelo de Propensão":
     )
 
     st.dataframe(
-        comparison_df.style.format(
-            {
-                "V1 - Random Forest": "{:.3f}",
-                "V2 - GBT": "{:.3f}"
-            }
-        ),
+        comparison_df,
         use_container_width=True,
         hide_index=True
     )
@@ -475,17 +855,20 @@ elif page == "Modelo de Propensão":
     )
 
     st.info(
-        "A V2 apresentou melhora em Accuracy, Precision e "
-        "ROC-AUC, porém reduziu Recall e F1 em relação à V1. "
-        "Isso indica que o modelo ficou mais seletivo ao "
-        "classificar conversões. Um próximo passo é otimizar "
-        "o threshold de classificação."
+        "A V2 aumentou Accuracy, Precision e ROC-AUC. "
+        "O Recall e o F1 ficaram menores porque o threshold "
+        "padrão tornou o modelo mais seletivo. Uma evolução "
+        "natural é otimizar o threshold utilizando validation."
     )
 
     st.divider()
 
+    # --------------------------------------------------------
+    # VALIDACAO
+    # --------------------------------------------------------
+
     st.subheader(
-        "Resultados da Validação"
+        "Comparação dos Modelos na Validação"
     )
 
     validation_df = pd.DataFrame(
@@ -519,8 +902,36 @@ elif page == "Modelo de Propensão":
 
     st.divider()
 
+    # --------------------------------------------------------
+    # MATRIZ DE CONFUSAO
+    # --------------------------------------------------------
+
     st.subheader(
         "Matriz de Confusão - GBT V2"
+    )
+
+    col1, col2 = st.columns(2)
+
+    col1.metric(
+        "True Positive",
+        "20.268"
+    )
+
+    col2.metric(
+        "False Positive",
+        "15.762"
+    )
+
+    col3, col4 = st.columns(2)
+
+    col3.metric(
+        "False Negative",
+        "77.206"
+    )
+
+    col4.metric(
+        "True Negative",
+        "149.214"
     )
 
     confusion_df = pd.DataFrame(
@@ -547,11 +958,14 @@ elif page == "Modelo de Propensão":
     )
 
     st.caption(
-        "O ROC-AUC de 0,644 indica capacidade de discriminação "
-        "moderada e superior ao baseline. O modelo ainda pode "
-        "ser evoluído com otimização de threshold, tuning de "
-        "hiperparâmetros e novas features comportamentais."
+        "ROC-AUC de 0,644 indica capacidade de discriminação "
+        "moderada e superior ao baseline aleatório. "
+        "O modelo permanece como MVP analítico e pode ser "
+        "evoluído com novas features, tuning e otimização "
+        "do threshold."
     )
+
+
 # ============================================================
 # PERFIS
 # ============================================================
@@ -563,9 +977,9 @@ elif page == "Perfis de Clientes":
     )
 
     st.write(
-        "O K-Means agrupa as sessões em três grupos com base "
-        "nas características de navegação e do carrinho. "
-        "O target de conversão não participa do clustering."
+        "O K-Means agrupa sessões com comportamentos "
+        "semelhantes sem utilizar o target de conversão "
+        "durante o processo de clustering."
     )
 
     if not cluster_metrics_df.empty:
@@ -608,7 +1022,8 @@ elif page == "Perfis de Clientes":
                     "abandonment_rate"
                 ]
             ],
-            use_container_width=True
+            use_container_width=True,
+            hide_index=True
         )
 
         chart_df = (
@@ -630,21 +1045,21 @@ elif page == "Perfis de Clientes":
     st.divider()
 
     st.subheader(
-        "Interpretação dos 3 Perfis"
+        "Interpretação dos Perfis"
     )
 
     st.markdown(
         """
-**🎯 Comprador de Alta Intenção**  
+### 🎯 Comprador de Alta Intenção
 Poucas visualizações antes do carrinho e decisão mais rápida.
 
-**🔍 Navegador Indeciso**  
-Maior volume de visualizações, mais produtos analisados e maior
-tempo antes da decisão.
+### 🔍 Navegador Indeciso
+Maior volume de visualizações, mais produtos analisados
+e maior tempo antes da decisão.
 
-**🤑 Caçador de Descontos**  
-Grupo com carrinho médio mais elevado, utilizado como segmento
-de maior sensibilidade potencial a incentivos comerciais.
+### 🤑 Caçador de Descontos
+Segmento interpretado como potencialmente mais sensível
+a incentivos comerciais, cupons e frete.
 """
     )
 
@@ -656,13 +1071,13 @@ de maior sensibilidade potencial a incentivos comerciais.
 
         st.dataframe(
             cluster_summary_df,
-            use_container_width=True
+            use_container_width=True,
+            hide_index=True
         )
 
     st.caption(
         "Os nomes dos perfis são interpretações de negócio "
-        "dos clusters encontrados pelo algoritmo, e não labels "
-        "existentes originalmente no dataset."
+        "dos clusters encontrados pelo algoritmo."
     )
 
 
@@ -674,6 +1089,11 @@ elif page == "Matriz de Decisão":
 
     st.header(
         "🎯 Matriz Perfil × Score × Ação"
+    )
+
+    st.write(
+        "A camada de decisão combina perfil comportamental "
+        "e score de propensão para escolher a ação comercial."
     )
 
     matrix_data = pd.DataFrame(
@@ -742,9 +1162,8 @@ elif page == "Matriz de Decisão":
     )
 
     st.info(
-        "A matriz combina o perfil comportamental do cliente "
-        "com o score de propensão para selecionar uma ação "
-        "comercial adequada."
+        "A matriz de decisão é uma camada de regra de negócio "
+        "aplicada após os modelos de propensão e segmentação."
     )
 
 
@@ -759,8 +1178,8 @@ elif page == "Simulador":
     )
 
     st.write(
-        "Selecione um perfil e defina o score de propensão "
-        "para visualizar a ação recomendada."
+        "Simule um cliente informando perfil comportamental "
+        "e score de propensão para visualizar a ação sugerida."
     )
 
     profile = st.selectbox(
@@ -782,8 +1201,7 @@ elif page == "Simulador":
 
     score = (
         score_percent
-        /
-        100
+        / 100
     )
 
     decision = get_action(
@@ -834,7 +1252,6 @@ elif page == "Simulador":
     )
 
     st.caption(
-        "A recomendação é baseada em uma regra de decisão "
-        "comercial aplicada após os modelos de propensão "
-        "e segmentação."
+        "A recomendação combina o perfil comportamental "
+        "com uma regra de decisão comercial."
     )

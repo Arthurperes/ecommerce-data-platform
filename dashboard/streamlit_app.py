@@ -3,7 +3,7 @@ import sys
 
 import pandas as pd
 import streamlit as st
-
+from pyathena import connect
 
 # ============================================================
 # AJUSTE DE PATH PARA IMPORTAR A MATRIZ DE DECISAO
@@ -21,6 +21,35 @@ if PROJECT_ROOT not in sys.path:
 
 from src.decision_matrix import get_action
 
+# ============================================================
+# CONFIGURACAO AWS / ATHENA
+# ============================================================
+
+AWS_REGION = "us-east-1"
+
+ATHENA_STAGING_DIR = (
+    "s3://ecommerce-data-platform-mack-lab/"
+    "athena-results/"
+)
+
+ATHENA_DATABASE = "ecommerce_data_platform"
+
+SESSION_TABLE = "gold_glue_test_session_features"
+FUNNEL_TABLE = "gold_glue_test_funnel_metrics"
+
+
+@st.cache_data(ttl=300)
+def run_athena_query(sql):
+
+    conn = connect(
+        s3_staging_dir=ATHENA_STAGING_DIR,
+        region_name=AWS_REGION
+    )
+
+    return pd.read_sql_query(
+        sql,
+        conn
+    )
 
 # ============================================================
 # CONFIGURACAO DA PAGINA
@@ -173,118 +202,163 @@ if page == "Visão Geral":
         "📊 Visão Geral do Projeto"
     )
 
-    col1, col2, col3, col4 = st.columns(
-        4
-    )
+    try:
 
-    col1.metric(
-        "Eventos processados",
-        "67,4 milhões"
-    )
+        overview_query = f"""
+        SELECT
+            COUNT(*) AS cart_sessions,
+            SUM(CASE WHEN is_abandoned = 1 THEN 1 ELSE 0 END) AS abandoned_sessions,
+            SUM(CASE WHEN converted = 1 THEN 1 ELSE 0 END) AS converted_sessions
+        FROM {ATHENA_DATABASE}.{SESSION_TABLE}
+        """
 
-    col2.metric(
-        "Sessões com carrinho",
-        "1.743.354"
-    )
+        funnel_query = f"""
+        SELECT
+            event_type,
+            count
+        FROM {ATHENA_DATABASE}.{FUNNEL_TABLE}
+        """
 
-    col3.metric(
-        "Carrinhos abandonados",
-        "1.094.983"
-    )
-
-    col4.metric(
-        "Sessões convertidas",
-        "648.361"
-    )
-
-    st.divider()
-
-    st.subheader(
-        "Taxa de abandono e conversão"
-    )
-
-    conversion_summary = pd.DataFrame(
-        {
-            "Status": [
-                "Abandonado",
-                "Convertido"
-            ],
-            "Quantidade": [
-                1094983,
-                648361
-            ]
-        }
-    )
-
-    st.bar_chart(
-        conversion_summary.set_index(
-            "Status"
+        overview_df = run_athena_query(
+            overview_query
         )
-    )
 
-    abandonment_rate = (
-        1094983
-        /
-        1743354
-        *
-        100
-    )
-
-    conversion_rate = (
-        648361
-        /
-        1743354
-        *
-        100
-    )
-
-    col1, col2 = st.columns(
-        2
-    )
-
-    col1.metric(
-        "Taxa de abandono",
-        f"{abandonment_rate:.2f}%"
-    )
-
-    col2.metric(
-        "Taxa de conversão",
-        f"{conversion_rate:.2f}%"
-    )
-
-    st.divider()
-
-    st.subheader(
-        "Funil de eventos"
-    )
-
-    funnel_df = pd.DataFrame(
-        {
-            "event_type": [
-                "view",
-                "cart",
-                "purchase"
-            ],
-            "count": [
-                63554512,
-                2930018,
-                916930
-            ]
-        }
-    )
-
-    st.bar_chart(
-        funnel_df.set_index(
-            "event_type"
+        funnel_df = run_athena_query(
+            funnel_query
         )
-    )
 
-    st.info(
-        "A solução utiliza os eventos de navegação, carrinho e "
-        "compra para criar features comportamentais por sessão, "
-        "treinar modelos e recomendar ações de recuperação."
-    )
+        cart_sessions = int(
+            overview_df.iloc[0]["cart_sessions"]
+        )
 
+        abandoned_sessions = int(
+            overview_df.iloc[0]["abandoned_sessions"]
+        )
+
+        converted_sessions = int(
+            overview_df.iloc[0]["converted_sessions"]
+        )
+
+        total_events = int(
+            funnel_df["count"].sum()
+        )
+
+        col1, col2, col3, col4 = st.columns(
+            4
+        )
+
+        col1.metric(
+            "Eventos processados",
+            f"{total_events:,}".replace(",", ".")
+        )
+
+        col2.metric(
+            "Sessões com carrinho",
+            f"{cart_sessions:,}".replace(",", ".")
+        )
+
+        col3.metric(
+            "Carrinhos abandonados",
+            f"{abandoned_sessions:,}".replace(",", ".")
+        )
+
+        col4.metric(
+            "Sessões convertidas",
+            f"{converted_sessions:,}".replace(",", ".")
+        )
+
+        st.caption(
+            "Dados carregados diretamente do Amazon Athena "
+            "sobre a camada Gold processada no AWS Glue."
+        )
+
+        st.divider()
+
+        st.subheader(
+            "Taxa de abandono e conversão"
+        )
+
+        conversion_summary = pd.DataFrame(
+            {
+                "Status": [
+                    "Abandonado",
+                    "Convertido"
+                ],
+                "Quantidade": [
+                    abandoned_sessions,
+                    converted_sessions
+                ]
+            }
+        )
+
+        st.bar_chart(
+            conversion_summary.set_index(
+                "Status"
+            )
+        )
+
+        abandonment_rate = (
+            abandoned_sessions
+            /
+            cart_sessions
+            *
+            100
+        )
+
+        conversion_rate = (
+            converted_sessions
+            /
+            cart_sessions
+            *
+            100
+        )
+
+        col1, col2 = st.columns(
+            2
+        )
+
+        col1.metric(
+            "Taxa de abandono",
+            f"{abandonment_rate:.2f}%"
+        )
+
+        col2.metric(
+            "Taxa de conversão",
+            f"{conversion_rate:.2f}%"
+        )
+
+        st.divider()
+
+        st.subheader(
+            "Funil de eventos"
+        )
+
+        st.bar_chart(
+            funnel_df.set_index(
+                "event_type"
+            )
+        )
+
+        st.dataframe(
+            funnel_df,
+            use_container_width=True,
+            hide_index=True
+        )
+
+        st.info(
+            "Esta visão consulta diretamente a camada Gold "
+            "no S3 por meio do Amazon Athena e do AWS Glue Data Catalog."
+        )
+
+    except Exception as e:
+
+        st.error(
+            "Erro ao consultar o Amazon Athena."
+        )
+
+        st.code(
+            str(e)
+        )
 
 # ============================================================
 # MODELO DE PROPENSAO

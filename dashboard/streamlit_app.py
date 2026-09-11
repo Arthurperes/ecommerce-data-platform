@@ -371,145 +371,187 @@ elif page == "Modelo de Propensão":
     )
 
     st.write(
-        "O modelo supervisionado utiliza Random Forest para "
-        "estimar a probabilidade de uma sessão com carrinho "
-        "apresentar comportamento semelhante a sessões que "
-        "historicamente terminaram em compra."
+        "A versão atual do modelo foi treinada na AWS com "
+        "Spark ML, comparando Random Forest e Gradient-Boosted "
+        "Trees (GBT). O GBT apresentou o melhor desempenho "
+        "na validação e foi selecionado como modelo final."
     )
-
-    if not metrics_df.empty:
-
-        metrics = metrics_df.iloc[
-            0
-        ]
-
-        col1, col2, col3, col4, col5 = (
-            st.columns(
-                5
-            )
-        )
-
-        col1.metric(
-            "Accuracy",
-            f"{metrics['accuracy']:.2%}"
-        )
-
-        col2.metric(
-            "Precision",
-            f"{metrics['precision']:.2%}"
-        )
-
-        col3.metric(
-            "Recall",
-            f"{metrics['recall']:.2%}"
-        )
-
-        col4.metric(
-            "F1 Score",
-            f"{metrics['f1_score']:.2%}"
-        )
-
-        col5.metric(
-            "ROC-AUC",
-            f"{metrics['roc_auc']:.3f}"
-        )
-
-    else:
-
-        st.warning(
-            "Arquivo model_metrics.csv não encontrado."
-        )
-
-    st.divider()
 
     st.subheader(
-        "Distribuição do Score de Conversão"
+        "Resultados do Modelo V2"
     )
 
-    if not scores_df.empty:
-
-        st.bar_chart(
-            scores_df[
-                "score_band"
-            ]
-            .value_counts()
-            .rename_axis(
-                "Faixa"
-            )
-            .to_frame(
-                "Quantidade"
-            )
-        )
-
-        st.write(
-            "Exemplo de sessões avaliadas:"
-        )
-
-        cols = [
-            "actual_converted",
-            "conversion_score",
-            "score_band"
-        ]
-
-        st.dataframe(
-            scores_df[
-                cols
-            ].head(
-                50
-            ),
-            use_container_width=True
-        )
-
-    else:
-
-        st.warning(
-            "Arquivo conversion_scores_sample.csv "
-            "não encontrado."
-        )
-
-    st.divider()
-
-    st.subheader(
-        "Importância das Features"
+    col1, col2, col3 = st.columns(
+        3
     )
 
-    if not feature_importance_df.empty:
+    col1.metric(
+        "Accuracy",
+        "64.58%"
+    )
 
-        importance_chart = (
-            feature_importance_df
-            .sort_values(
-                "importance",
-                ascending=False
-            )
-            .set_index(
-                "feature"
-            )
-        )
+    col2.metric(
+        "Precision",
+        "56.25%"
+    )
 
-        st.bar_chart(
-            importance_chart
-        )
+    col3.metric(
+        "Recall",
+        "20.79%"
+    )
 
-        st.dataframe(
-            feature_importance_df,
-            use_container_width=True
-        )
+    col4, col5, col6 = st.columns(
+        3
+    )
 
-    else:
+    col4.metric(
+        "F1 Score",
+        "30.36%"
+    )
 
-        st.warning(
-            "Arquivo feature_importance.csv "
-            "não encontrado."
-        )
+    col5.metric(
+        "ROC-AUC",
+        "0.644"
+    )
+
+    col6.metric(
+        "PR-AUC",
+        "0.501"
+    )
 
     st.caption(
-        "ROC-AUC superior a 0,50 indica capacidade de "
-        "discriminação acima de uma classificação aleatória. "
-        "O resultado atual demonstra sinal preditivo moderado "
-        "e pode ser evoluído com histórico adicional e tuning."
+        "Modelo vencedor: GBTClassifier. "
+        "Treinamento e avaliação executados no AWS Glue "
+        "com Apache Spark ML."
     )
 
+    st.divider()
 
+    st.subheader(
+        "Comparação V1 × V2"
+    )
+
+    comparison_df = pd.DataFrame(
+        {
+            "Métrica": [
+                "Accuracy",
+                "Precision",
+                "Recall",
+                "F1 Score",
+                "ROC-AUC"
+            ],
+            "V1 - Random Forest": [
+                0.5809,
+                0.4538,
+                0.5943,
+                0.5146,
+                0.6320
+            ],
+            "V2 - GBT": [
+                0.645769,
+                0.562531,
+                0.207932,
+                0.303631,
+                0.644025
+            ]
+        }
+    )
+
+    st.dataframe(
+        comparison_df.style.format(
+            {
+                "V1 - Random Forest": "{:.3f}",
+                "V2 - GBT": "{:.3f}"
+            }
+        ),
+        use_container_width=True,
+        hide_index=True
+    )
+
+    st.bar_chart(
+        comparison_df.set_index(
+            "Métrica"
+        )
+    )
+
+    st.info(
+        "A V2 apresentou melhora em Accuracy, Precision e "
+        "ROC-AUC, porém reduziu Recall e F1 em relação à V1. "
+        "Isso indica que o modelo ficou mais seletivo ao "
+        "classificar conversões. Um próximo passo é otimizar "
+        "o threshold de classificação."
+    )
+
+    st.divider()
+
+    st.subheader(
+        "Resultados da Validação"
+    )
+
+    validation_df = pd.DataFrame(
+        {
+            "Modelo": [
+                "Random Forest V2",
+                "GBT V2"
+            ],
+            "ROC-AUC": [
+                0.632723,
+                0.646266
+            ],
+            "PR-AUC": [
+                0.492005,
+                0.505606
+            ]
+        }
+    )
+
+    st.dataframe(
+        validation_df,
+        use_container_width=True,
+        hide_index=True
+    )
+
+    st.bar_chart(
+        validation_df.set_index(
+            "Modelo"
+        )
+    )
+
+    st.divider()
+
+    st.subheader(
+        "Matriz de Confusão - GBT V2"
+    )
+
+    confusion_df = pd.DataFrame(
+        {
+            "Métrica": [
+                "True Positive",
+                "False Positive",
+                "False Negative",
+                "True Negative"
+            ],
+            "Quantidade": [
+                20268,
+                15762,
+                77206,
+                149214
+            ]
+        }
+    )
+
+    st.dataframe(
+        confusion_df,
+        use_container_width=True,
+        hide_index=True
+    )
+
+    st.caption(
+        "O ROC-AUC de 0,644 indica capacidade de discriminação "
+        "moderada e superior ao baseline. O modelo ainda pode "
+        "ser evoluído com otimização de threshold, tuning de "
+        "hiperparâmetros e novas features comportamentais."
+    )
 # ============================================================
 # PERFIS
 # ============================================================

@@ -747,6 +747,651 @@ elif page == "Modelo de Propensão":
     )
 
     st.write(
+        "A versão final foi treinada na AWS utilizando "
+        "Apache Spark ML. Random Forest e Gradient-Boosted "
+        "Trees foram comparados na validação, utilizando "
+        "32 features comportamentais e históricas."
+    )
+
+    st.markdown(
+        """
+        <div class="model-winner">
+            <b>🏆 Modelo final: GBTClassifier V3</b><br>
+            Selecionado pelo melhor desempenho de ROC-AUC
+            na validação.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.subheader(
+        "Resultados do Modelo Final - V3"
+    )
+
+    col1, col2, col3 = st.columns(3)
+
+    col1.metric("Accuracy", "69.71%")
+    col2.metric("Precision", "66.95%")
+    col3.metric("Recall", "36.68%")
+
+    col4, col5, col6 = st.columns(3)
+
+    col4.metric("F1 Score", "47.40%")
+    col5.metric("ROC-AUC", "0.718")
+    col6.metric("PR-AUC", "0.617")
+
+    st.caption(
+        "Treinamento e avaliação executados no AWS Glue "
+        "com Apache Spark ML. O V3 utiliza 32 features, "
+        "incluindo histórico anterior do usuário."
+    )
+
+    st.divider()
+
+    st.subheader(
+        "Evolução do Modelo"
+    )
+
+    comparison_df = pd.DataFrame(
+        {
+            "Métrica": [
+                "Accuracy",
+                "Precision",
+                "Recall",
+                "F1 Score",
+                "ROC-AUC"
+            ],
+            "V1 - Random Forest": [
+                0.5809,
+                0.4538,
+                0.5943,
+                0.5146,
+                0.6320
+            ],
+            "V2 - GBT": [
+                0.645769,
+                0.562531,
+                0.207932,
+                0.303631,
+                0.644025
+            ],
+            "V3 - GBT": [
+                0.697099,
+                0.669453,
+                0.366827,
+                0.473952,
+                0.717878
+            ]
+        }
+    )
+
+    st.dataframe(
+        comparison_df,
+        use_container_width=True,
+        hide_index=True
+    )
+
+    st.bar_chart(
+        comparison_df.set_index("Métrica")
+    )
+
+    st.success(
+        "A V3 apresentou evolução consistente em relação à V2. "
+        "O ROC-AUC no conjunto de teste passou de 0,644 para 0,718, "
+        "e o PR-AUC subiu de aproximadamente 0,501 para 0,617. "
+        "O ganho foi obtido principalmente com a inclusão de "
+        "features históricas do usuário."
+    )
+
+    st.divider()
+
+    st.subheader(
+        "Comparação dos Modelos na Validação - V3"
+    )
+
+    validation_df = pd.DataFrame(
+        {
+            "Modelo": [
+                "Random Forest V3",
+                "GBT V3"
+            ],
+            "ROC-AUC": [
+                0.701022,
+                0.716835
+            ],
+            "PR-AUC": [
+                0.600414,
+                0.615021
+            ]
+        }
+    )
+
+    st.dataframe(
+        validation_df,
+        use_container_width=True,
+        hide_index=True
+    )
+
+    st.bar_chart(
+        validation_df.set_index("Modelo")
+    )
+
+    st.info(
+        "O GBT V3 foi selecionado como modelo final porque "
+        "apresentou o melhor ROC-AUC e PR-AUC na validação."
+    )
+
+    st.divider()
+
+    st.subheader(
+        "Features Históricas Adicionadas no V3"
+    )
+
+    history_features_df = pd.DataFrame(
+        {
+            "Feature": [
+                "user_prior_sessions",
+                "user_prior_conversions",
+                "user_prior_abandonments",
+                "user_prior_conversion_rate",
+                "user_prior_abandon_rate",
+                "user_lifetime_hours"
+            ],
+            "Descrição": [
+                "Quantidade de sessões anteriores do usuário",
+                "Conversões anteriores do usuário",
+                "Abandonos anteriores do usuário",
+                "Taxa histórica de conversão",
+                "Taxa histórica de abandono",
+                "Tempo de relacionamento observado do usuário"
+            ]
+        }
+    )
+
+    st.dataframe(
+        history_features_df,
+        use_container_width=True,
+        hide_index=True
+    )
+
+    st.caption(
+        "As features históricas utilizam apenas sessões anteriores "
+        "à sessão avaliada, reduzindo risco de data leakage."
+    )
+
+    st.divider()
+
+    st.subheader(
+        "Interpretação do Resultado"
+    )
+
+    st.write(
+        "O ROC-AUC de aproximadamente 0,718 indica que o V3 "
+        "possui capacidade de discriminação superior às versões "
+        "anteriores. O modelo ainda não representa uma solução "
+        "de produção, mas é adequado como MVP analítico para "
+        "priorização de carrinhos e apoio à matriz de decisão."
+    )
+
+
+# ============================================================
+# PERFIS
+# ============================================================
+
+PROFILE_MAP = {
+    0: "Navegador Indeciso",
+    1: "Comprador de Alta Intencao",
+    2: "Cacador de Descontos"
+}
+
+
+# ============================================================
+# CARGA CSV
+# ============================================================
+
+@st.cache_data
+def load_csv(path):
+    if os.path.exists(path):
+        return pd.read_csv(path)
+
+    return pd.DataFrame()
+
+
+cluster_conversion_df = load_csv(
+    CLUSTER_CONVERSION_PATH
+)
+
+cluster_summary_df = load_csv(
+    CLUSTER_SUMMARY_PATH
+)
+
+cluster_metrics_df = load_csv(
+    CLUSTER_METRICS_PATH
+)
+
+
+# ============================================================
+# CABECALHO
+# ============================================================
+
+st.markdown(
+    dedent(
+        """
+        <div class="hero">
+        <h1>🛒 E-commerce Cart Recovery</h1>
+
+        <p>
+            Plataforma analítica para identificação de abandono
+            de carrinho, propensão à conversão e recomendação de
+            ações comerciais.
+        </p>
+
+        <span class="badge">AWS</span>
+        <span class="badge">S3 Data Lake</span>
+        <span class="badge">AWS Glue</span>
+        <span class="badge">PySpark</span>
+        <span class="badge">Athena</span>
+        <span class="badge">Spark ML</span>
+        <span class="badge">EC2</span>
+        <span class="badge">Terraform</span>
+            </div>
+        """
+    ),
+    unsafe_allow_html=True
+)
+
+# ============================================================
+# SIDEBAR
+# ============================================================
+
+st.sidebar.markdown(
+    """
+    ## 🛒 Cart Recovery
+
+    **E-commerce Data Platform**
+
+    ---
+    """
+)
+
+page = st.sidebar.radio(
+    "Selecione uma visão",
+    [
+        "Visão Geral",
+        "Modelo de Propensão",
+        "Perfis de Clientes",
+        "Matriz de Decisão",
+        "Simulador"
+    ]
+)
+
+st.sidebar.markdown("---")
+
+st.sidebar.caption(
+    "AWS • Glue • Athena • Spark ML • EC2"
+)
+
+
+# ============================================================
+# VISAO GERAL
+# ============================================================
+
+if page == "Visão Geral":
+
+    st.header(
+        "📊 Visão Geral do Projeto"
+    )
+
+    st.markdown(
+    	'<div class="pipeline-container">'
+    	'<div class="pipeline-card"><div class="pipeline-icon">📄</div><div class="pipeline-title">Dataset</div><div class="pipeline-subtitle">Eventos E-commerce</div></div>'
+    	'<div class="pipeline-arrow">→</div>'
+  	'<div class="pipeline-card"><div class="pipeline-icon">🪣</div><div class="pipeline-title">S3 Bronze</div><div class="pipeline-subtitle">Raw / CSV</div></div>'
+    	'<div class="pipeline-arrow">→</div>'
+    	'<div class="pipeline-card"><div class="pipeline-icon">⚙️</div><div class="pipeline-title">AWS Glue</div><div class="pipeline-subtitle">PySpark ETL</div></div>'
+    	'<div class="pipeline-arrow">→</div>'
+    	'<div class="pipeline-card"><div class="pipeline-icon">🥈</div><div class="pipeline-title">Silver</div><div class="pipeline-subtitle">Parquet tratado</div></div>'
+    	'<div class="pipeline-arrow">→</div>'
+    	'<div class="pipeline-card"><div class="pipeline-icon">🥇</div><div class="pipeline-title">Gold</div><div class="pipeline-subtitle">Features / Métricas</div></div>'
+    	'<div class="pipeline-arrow">→</div>'
+    	'<div class="pipeline-card"><div class="pipeline-icon">🔎</div><div class="pipeline-title">Athena</div><div class="pipeline-subtitle">SQL Analytics</div></div>'
+    	'<div class="pipeline-arrow">→</div>'
+    	'<div class="pipeline-card"><div class="pipeline-icon">📊</div><div class="pipeline-title">EC2</div><div class="pipeline-subtitle">Streamlit</div></div>'
+    	'</div>',
+    	unsafe_allow_html=True,
+     )       
+
+    try:
+
+        overview_query = f"""
+        SELECT
+            COUNT(*) AS cart_sessions,
+            SUM(
+                CASE
+                    WHEN is_abandoned = 1
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS abandoned_sessions,
+            SUM(
+                CASE
+                    WHEN converted = 1
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS converted_sessions
+        FROM {ATHENA_DATABASE}.{SESSION_TABLE}
+        """
+
+        funnel_query = f"""
+        SELECT
+            event_type,
+            count
+        FROM {ATHENA_DATABASE}.{FUNNEL_TABLE}
+        """
+
+        overview_df = run_athena_query(
+            overview_query
+        )
+
+        funnel_df = run_athena_query(
+            funnel_query
+        )
+
+        cart_sessions = int(
+            overview_df.iloc[0]["cart_sessions"]
+        )
+
+        abandoned_sessions = int(
+            overview_df.iloc[0]["abandoned_sessions"]
+        )
+
+        converted_sessions = int(
+            overview_df.iloc[0]["converted_sessions"]
+        )
+
+        total_events = int(
+            funnel_df["count"].sum()
+        )
+
+        abandonment_rate = (
+            abandoned_sessions
+            / cart_sessions
+            * 100
+        )
+
+        conversion_rate = (
+            converted_sessions
+            / cart_sessions
+            * 100
+        )
+
+        # ----------------------------------------------------
+        # KPIs PRINCIPAIS
+        # ----------------------------------------------------
+
+        col1, col2, col3, col4 = st.columns(4)
+
+        col1.metric(
+            "Eventos processados",
+            f"{total_events:,}".replace(",", ".")
+        )
+
+        col2.metric(
+            "Sessões com carrinho",
+            f"{cart_sessions:,}".replace(",", ".")
+        )
+
+        col3.metric(
+            "Carrinhos abandonados",
+            f"{abandoned_sessions:,}".replace(",", ".")
+        )
+
+        col4.metric(
+            "Sessões convertidas",
+            f"{converted_sessions:,}".replace(",", ".")
+        )
+
+        st.caption(
+            "Dados carregados diretamente do Amazon Athena "
+            "sobre a camada Gold processada no AWS Glue."
+        )
+
+        st.divider()
+
+        # ----------------------------------------------------
+        # RESUMO EXECUTIVO
+        # ----------------------------------------------------
+
+        st.subheader(
+            "Resumo Executivo"
+        )
+
+        col1, col2, col3, col4 = st.columns(4)
+
+        col1.metric(
+            "Taxa de abandono",
+            f"{abandonment_rate:.2f}%"
+        )
+
+        col2.metric(
+            "Taxa de conversão",
+            f"{conversion_rate:.2f}%"
+        )
+
+        col3.metric(
+            "Modelo ML",
+            "GBT V2"
+        )
+
+        col4.metric(
+            "ROC-AUC",
+            "0.644"
+        )
+
+        st.caption(
+            "Pipeline executado na AWS utilizando S3, Glue, "
+            "Spark ML, Glue Data Catalog, Athena e EC2."
+        )
+
+        st.divider()
+
+        # ----------------------------------------------------
+        # ABANDONO E CONVERSAO
+        # ----------------------------------------------------
+
+        st.subheader(
+            "Taxa de abandono e conversão"
+        )
+
+        conversion_summary = pd.DataFrame(
+            {
+                "Status": [
+                    "Abandonado",
+                    "Convertido"
+                ],
+                "Quantidade": [
+                    abandoned_sessions,
+                    converted_sessions
+                ]
+            }
+        )
+
+        st.bar_chart(
+            conversion_summary.set_index(
+                "Status"
+            )
+        )
+
+        st.divider()
+
+        # ----------------------------------------------------
+        # FUNIL
+        # ----------------------------------------------------
+
+        st.subheader(
+            "Funil de Eventos"
+        )
+
+        st.bar_chart(
+            funnel_df.set_index(
+                "event_type"
+            )
+        )
+
+        st.dataframe(
+            funnel_df,
+            use_container_width=True,
+            hide_index=True
+        )
+
+        funnel_values = (
+            funnel_df
+            .set_index("event_type")["count"]
+            .to_dict()
+        )
+
+        views = funnel_values.get(
+            "view",
+            0
+        )
+
+        carts = funnel_values.get(
+            "cart",
+            0
+        )
+
+        purchases = funnel_values.get(
+            "purchase",
+            0
+        )
+
+        view_to_cart = (
+            carts / views * 100
+            if views > 0
+            else 0
+        )
+
+        cart_to_purchase = (
+            purchases / carts * 100
+            if carts > 0
+            else 0
+        )
+
+        view_to_purchase = (
+            purchases / views * 100
+            if views > 0
+            else 0
+        )
+
+        st.subheader(
+            "Conversão entre etapas do funil"
+        )
+
+        col1, col2, col3 = st.columns(3)
+
+        col1.metric(
+            "View → Cart",
+            f"{view_to_cart:.2f}%"
+        )
+
+        col2.metric(
+            "Cart → Purchase",
+            f"{cart_to_purchase:.2f}%"
+        )
+
+        col3.metric(
+            "View → Purchase",
+            f"{view_to_purchase:.2f}%"
+        )
+
+        st.divider()
+
+        # ----------------------------------------------------
+        # STATUS DA PLATAFORMA
+        # ----------------------------------------------------
+
+        st.subheader(
+            "☁️ Status da Plataforma"
+        )
+
+        col1, col2, col3, col4 = st.columns(4)
+
+        with col1:
+            st.markdown(
+                """
+                <div class="status-card">
+                    <b>Amazon S3</b><br>
+                    <span class="status-ok">● Ativo</span><br>
+                    <small>Bronze / Silver / Gold</small>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+        with col2:
+            st.markdown(
+                """
+                <div class="status-card">
+                    <b>AWS Glue</b><br>
+                    <span class="status-ok">● Processado</span><br>
+                    <small>ETL + ML V2</small>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+        with col3:
+            st.markdown(
+                """
+                <div class="status-card">
+                    <b>Amazon Athena</b><br>
+                    <span class="status-ok">● Conectado</span><br>
+                    <small>Consultas Gold</small>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+        with col4:
+            st.markdown(
+                """
+                <div class="status-card">
+                    <b>Amazon EC2</b><br>
+                    <span class="status-ok">● Online</span><br>
+                    <small>Streamlit :8501</small>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+        st.info(
+            "A visão executiva consulta a camada Gold por meio "
+            "do Amazon Athena e do AWS Glue Data Catalog."
+        )
+
+    except Exception as e:
+
+        st.error(
+            "Erro ao consultar o Amazon Athena."
+        )
+
+        st.code(
+            str(e)
+        )
+
+
+# ============================================================
+# MODELO DE PROPENSAO
+# ============================================================
+
+elif page == "Modelo de Propensão":
+
+    st.header(
+        "🤖 Modelo de Propensão à Conversão"
+    )
+
+    st.write(
         "A versão atual foi treinada na AWS utilizando "
         "Apache Spark ML. Random Forest e Gradient-Boosted "
         "Trees foram comparados utilizando o mesmo conjunto "

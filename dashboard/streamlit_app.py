@@ -1,3 +1,5 @@
+from textwrap import dedent
+from textwrap import dedent
 import os
 import sys
 from textwrap import dedent
@@ -779,6 +781,155 @@ elif page == "Modelo de Propensão":
     col4.metric("F1 Score", "47.40%")
     col5.metric("ROC-AUC", "0.718")
     col6.metric("PR-AUC", "0.617")
+
+    st.subheader(
+        "Matriz de Confusão - GBT V3"
+    )
+
+    st.markdown(
+        dedent(
+            """
+        <style>
+        .cm-wrapper {
+            max-width: 900px;
+            margin: 20px auto 30px auto;
+        }
+
+        .cm-axis-title {
+            text-align: center;
+            font-weight: 700;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .cm-grid {
+            display: grid;
+            grid-template-columns: 170px 1fr 1fr;
+            gap: 10px;
+        }
+
+        .cm-header,
+        .cm-row-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-weight: 700;
+            border-radius: 12px;
+            background: #f3f4f6;
+            padding: 16px;
+            color: #111827;
+        }
+
+        .cm-cell {
+            min-height: 150px;
+            border-radius: 14px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            border: 1px solid rgba(0,0,0,0.08);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+        }
+
+        .cm-correct {
+            background: #e8f5e9;
+        }
+
+        .cm-error {
+            background: #fff3e0;
+        }
+
+        .cm-number {
+            font-size: 34px;
+            font-weight: 800;
+            color: #111827;
+        }
+
+        .cm-label {
+            margin-top: 6px;
+            font-size: 15px;
+            font-weight: 700;
+            color: #374151;
+        }
+
+        .cm-desc {
+            margin-top: 5px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+        </style>
+
+        <div class="cm-wrapper">
+
+            <div class="cm-axis-title">
+                Valor Predito
+            </div>
+
+            <div class="cm-grid">
+
+                <div></div>
+
+                <div class="cm-header">
+                    Não Converteu (0)
+                </div>
+
+                <div class="cm-header">
+                    Converteu (1)
+                </div>
+
+                <div class="cm-row-label">
+                    Real<br>Não Converteu (0)
+                </div>
+
+                <div class="cm-cell cm-correct">
+                    <div class="cm-number">147.089</div>
+                    <div class="cm-label">True Negative (TN)</div>
+                    <div class="cm-desc">
+                        Não converteu e o modelo previu corretamente
+                    </div>
+                </div>
+
+                <div class="cm-cell cm-error">
+                    <div class="cm-number">17.676</div>
+                    <div class="cm-label">False Positive (FP)</div>
+                    <div class="cm-desc">
+                        Não converteu, mas o modelo previu conversão
+                    </div>
+                </div>
+
+                <div class="cm-row-label">
+                    Real<br>Converteu (1)
+                </div>
+
+                <div class="cm-cell cm-error">
+                    <div class="cm-number">61.792</div>
+                    <div class="cm-label">False Negative (FN)</div>
+                    <div class="cm-desc">
+                        Converteu, mas o modelo não identificou
+                    </div>
+                </div>
+
+                <div class="cm-cell cm-correct">
+                    <div class="cm-number">35.799</div>
+                    <div class="cm-label">True Positive (TP)</div>
+                    <div class="cm-desc">
+                        Converteu e o modelo previu corretamente
+                    </div>
+                </div>
+
+            </div>
+        </div>
+            """
+        ),
+        unsafe_allow_html=True
+    )
+
+
+
+
 
     st.caption(
         "Treinamento e avaliação executados no AWS Glue "
